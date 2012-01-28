@@ -21,11 +21,11 @@ module BBSexp
       # i _swear_ i will do it properly when i rewrite it some time in the distant future
       return @text if @func_stack.empty?
 
-      doc = Nokogiri::XML(@text)
+      doc = Nokogiri::XML("<fakeroot>"+@text+"</fakeroot>")
       doc.xpath("//funs").each do |fun|
          fun.content = @func_stack[fun.attr(:id).to_i].(fun.content)
       end
-      doc.root.to_s.gsub(/<\/?funs(\sid="\d*")?>/, "")
+      doc.root.to_s.gsub(/(<\/?fakeroot>)|(<\/?funs(\sid="\d*")?>)/, "")
     end
 
     def gen_token(match, exps, end_noparse) 
