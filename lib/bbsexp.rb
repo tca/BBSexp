@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+require "nokogiri"
 require "bbsexp/parser"
 require "bbsexp/expression"
 require "bbsexp/token"

@@ -1,4 +1,4 @@
-require 'bbsexp'
+require './lib/bbsexp.rb'
 
 # set up a new parser
 parser = BBSexp::Parser.new do |p|

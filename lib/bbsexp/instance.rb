@@ -4,7 +4,7 @@ module BBSexp
       @parser = parser
       @text = text
       @stack = []
-      @func_stack = []
+      @func_stack = {}
       @state = [3]
       @locks = Hash[ @parser.exps.keys.map{|k| [k, false] } ]
     end
@@ -19,10 +19,12 @@ module BBSexp
       # do a second pass for functions
       # please don't beat me this is meant for use on html-sanitized input
       # i _swear_ i will do it properly when i rewrite it some time in the distant future
-      @func_stack.each do |token|
-        @text.gsub!(/<funs#{token.id}>(.*)<\/funs#{token.id}>/) { token.call($1) }
+      return @text if @func_stack.empty?
+      doc = Nokogiri::XML("<de>"+@text+"</de>")
+      doc.xpath("//funs").each do |fun|
+         fun.content = @func_stack[fun.attr(:id).to_i].(fun.content)
       end
-      @text
+      doc.to_s.gsub(/<\/?funs(\sid="\d*")?>/, "")
     end
 
     def gen_token(match, exps, end_noparse) 
@@ -59,9 +61,9 @@ module BBSexp
                      
       unless token.functions.empty?
         token.id = @func_stack.size + 1
-        func_marker = "<funs#{token.id}>"
-        token.end_tags.prepend "</funs#{token.id}>"
-        @func_stack << token
+        func_marker = "<funs id='#{token.id}'>"
+        token.end_tags.prepend "</funs>"
+        @func_stack[token.id] = token
       end
 
       
