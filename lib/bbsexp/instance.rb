@@ -20,11 +20,12 @@ module BBSexp
       # please don't beat me this is meant for use on html-sanitized input
       # i _swear_ i will do it properly when i rewrite it some time in the distant future
       return @text if @func_stack.empty?
-      doc = Nokogiri::XML("<de>"+@text+"</de>")
+
+      doc = Nokogiri::XML(@text)
       doc.xpath("//funs").each do |fun|
          fun.content = @func_stack[fun.attr(:id).to_i].(fun.content)
       end
-      doc.to_s.gsub(/<\/?funs(\sid="\d*")?>/, "")
+      doc.root.to_s.gsub(/<\/?funs(\sid="\d*")?>/, "")
     end
 
     def gen_token(match, exps, end_noparse) 
