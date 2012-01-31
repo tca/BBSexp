@@ -3,16 +3,56 @@ module BBSexp
     def initialize(parser, text)
       @parser = parser
       @text = text
+      @scanner = StringScanner.new(@text)
+      @result = ''
       @stack = []
-      @func_stack = {}
+      @func_stack = []
+      @callbacks = []
       @state = [3]
       @locks = Hash[ @parser.exps.keys.map{|k| [k, false] } ]
     end
 
     def build
       # compile expessions
-      @text.gsub!(@parser.regexp) {|match| gen_token(match, $1, $2) }
+      #@text.gsub!(@parser.regexp) {|match| gen_token(match, $1, $2) }
+      
+      tokens = []
+      while string = @scanner.scan_until(@parser.regexp) 
+       exp = @scanner.matched
+       tokens << [:string, string[0..-(exp.size + 1)]] unless string == exp
+       tokens << [:exp, exp[1..-2]]
+      end
+      tokens << [:string, @text[@scanner.pos..-1]] unless @scanner.eos?
 
+      p tokens
+
+      result = tokens.reduce('') do |result, token|
+        type, value = token
+        case type
+        when :string
+          puts 'string' 
+          # run callbacks on string
+          @func_stack.reduce(value) {|value, func| func.(value) }
+        when :exp
+          #register
+          puts 'exp'
+          case value[0] == @parser.end_exp ? :end : :start
+          when :start
+            register(value)  #returns start tags
+          when :end
+            terminate(value) #returns end tags
+          end
+        end
+      end
+      
+
+      p result
+
+
+      #tokens.each{|type, token| gen_token(type, token) }
+      
+      
+      if false
       # close unclosed expressions
       @text << @stack.reverse.map {|token| token.end_tags }.join
 
@@ -21,14 +61,10 @@ module BBSexp
       # i _swear_ i will do it properly when i rewrite it some time in the distant future
       return @text if @func_stack.empty?
 
-      doc = Nokogiri::XML("<fakeroot>"+@text+"</fakeroot>")
-      doc.xpath("//funs").each do |fun|
-         fun.content = @func_stack[fun.attr(:id).to_i].(fun.content)
       end
-      doc.root.to_s.gsub(/(<\/?fakeroot>)|(<\/?funs(\sid="\d*")?>)/, "")
     end
 
-    def gen_token(match, exps, end_noparse) 
+    def xgen_token(match, exps, end_noparse) 
       #dont register token if in no parse zone (unless it's the "end noparse" exp)
       return match if @state.last == 0 and end_noparse.nil?
 
@@ -42,10 +78,31 @@ module BBSexp
 
     end
 
+    def register_token(type, token) 
+      case type
+      when :string
+        puts 'string' 
+        # run callbacks on string
+        # append string to result
+        #result << 
+      when :exp
+        #register
+        #puts 'exp'
+        #@stack.last.stack << token
+        #token = Expression.new(token)
+      end
+
+      case type
+      when :start then register(token)
+      when :end   then terminate(token) 
+      end 
+
+    end
+
     def register(token)
       # select only valid expressions
-      token.active_exps =
-      token.exps.uniq.select do |exp|     # remove redundant and illegal expressions 
+      active_exps =
+      exps.uniq.select do |exp|     # remove redundant and illegal expressions 
         @locks[exp] == false and @parser.exps[exp] <= @state.last
       end.sort do |a,b|                   # sort nocode > block > inline
         @parser.exps[b] <=> @parser.exps[a]
@@ -62,9 +119,9 @@ module BBSexp
                      
       unless token.functions.empty?
         token.id = @func_stack.size + 1
-        func_marker = "<funs id='#{token.id}'>"
+        func_marker = "<funs#{token.id}>"
         token.end_tags.prepend "</funs>"
-        @func_stack[token.id] = token
+        @func_stack << token
       end
 
       

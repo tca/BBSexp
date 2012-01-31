@@ -1,4 +1,4 @@
-require './lib/bbsexp.rb'
+require_relative 'lib/bbsexp.rb'
 
 # set up a new parser
 parser = BBSexp::Parser.new do |p|
@@ -22,7 +22,7 @@ parser = BBSexp::Parser.new do |p|
 end
 
 # give it some nasty input
-text = '[bui]wtf[|] [bpc`][bi*] <-- dont parse this (bold code) or this --> [|][|`]' \
+text = '[bui]wtf[|] [bpc`][bic] <-- dont parse this (bold code) or this --> [|][|`]' \
        '[biqr]reversed bold italic blockquote[|] [q]quote[|]' \
        '[i][b]end two tags at once[||]no start so dont parse -> [|] [b]tag ends itself'
 

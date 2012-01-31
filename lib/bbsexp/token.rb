@@ -9,9 +9,9 @@ module BBSexp
     attr_reader :exps,
                 :string
 
-    def initialize(match, exps)
+    def initialize(match)
       @string = match
-      @exps = exps.chars.to_a
+      @exps = match.chars.to_a
       @active_exps = []
     end 
    
