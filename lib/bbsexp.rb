@@ -1,5 +1,4 @@
 require "strscan"
-require "nokogiri"
 require_relative "bbsexp/parser"
 require_relative "bbsexp/expression"
 require_relative "bbsexp/token"

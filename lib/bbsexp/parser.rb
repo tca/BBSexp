@@ -1,16 +1,16 @@
 module BBSexp
   class Parser
-    attr_accessor :exps, :brackets, :end_exp
+    attr_accessor :exps, :brackets, :end_exp, :no_parse
     attr_reader :regexp, :end_exp
 
     def initialize
       @exps = {}
       yield self
-      @noparse ||= '&'
+      @no_parse ||= '&'
       exps = [  @brackets[0],
                 @exps.keys.join,
                 @end_exp,
-                @noparse,
+                @no_parse,
                 @brackets[1] ].map {|v| Regexp.escape(v) }
 
       regexp = "%s([%s]+|%s+(%s)?)%s" % exps
@@ -22,7 +22,7 @@ module BBSexp
     end
 
     def exp(sym, state, args={})
-      @noparse = sym if state == :noparse
+      @no_parse = sym if state == :noparse
       @exps[sym] = Expression.new(sym, state, args)
     end
     
