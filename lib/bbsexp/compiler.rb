@@ -1,5 +1,5 @@
 module BBSexp
-  class Instance
+  class Compiler
     def initialize(parser, text)
       @parser = parser
       @text = text
@@ -9,7 +9,6 @@ module BBSexp
       @func_stack = []
       @state = [3]
       @locks = Hash[ @parser.exps.keys.map{|k| [k, false] } ]
-      @brackets = ->(token) { @parser.brackets[0] + token + @parser.brackets[1] }
     end
 
     def build
@@ -38,7 +37,7 @@ module BBSexp
         @func_stack.reduce(value) {|value, func| func.(value) }
       when :exp
         # dont parse if we are in the no parse zone
-        return @brackets[value] if @state.last == 0 and not value.include? @parser.no_parse
+        return @parser.brackets(value) if @state.last == 0 and not value.include? @parser.no_parse
         # process expressions
         unless value[0] == @parser.end_exp
           register(value)  #returns start tags
@@ -67,7 +66,7 @@ module BBSexp
     end
 
     def terminate(token) 
-      return @brackets[token] if @stack.empty? # don't do anything if the stack is empty
+      return @parser.brackets(token) if @stack.empty? # don't do anything if the stack is empty
 
       token.chars.map do |close|
         if exps = @stack.pop
