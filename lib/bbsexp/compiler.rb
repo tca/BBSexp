@@ -3,47 +3,53 @@ module BBSexp
     def initialize(parser, text)
       @parser = parser
       @text = text
-      @scanner = StringScanner.new(@text)
       @result = ''
       @stack = []
       @func_stack = []
       @state = [3]
       @locks = Hash[ @parser.exps.keys.map{|k| [k, false] } ]
+      @tokens = tokens
     end
 
     def build
-      tokens = []
-      while string = @scanner.scan_until(@parser.regexp) 
-       exp = @scanner.matched
-       tokens << [:string, string[0..-(exp.size + 1)]] unless string == exp
-       tokens << [:exp, exp[1..-2]]
-      end
-      tokens << [:string, @scanner.rest] unless @scanner.eos?
+      @result <<  @tokens.to_a.map do |type, value|
+                    case type
+                    when :string  then eval_string value
+                    when :exp     then eval_exp value
+                    end
+                  end.join
 
-      # evaluate tokens
-      @result = tokens.map{|token| eval_token(token) }.join
       # close unclosed expressions
       @result << @stack.reverse.map {|token|
                   token.reverse.map {|exp|
                     @parser.exps[exp].tags.last }.join }.join
-      @result
     end
 
-    def eval_token(token)
-      type, value = token
-      case type
-      when :string
-        # run callbacks on string
-        @func_stack.reduce(value) {|value, func| func.(value) }
-      when :exp
-        # dont parse if we are in the no parse zone
-        return @parser.brackets(value) if @state.last == 0 and not value.include? @parser.no_parse
-        # process expressions
-        unless value[0] == @parser.end_exp
-          register(value)  #returns start tags
-        else
-         terminate(value) #returns end tags
+    def tokens
+      Enumerator.new do |y|
+        scanner = StringScanner.new(@text)
+        while string = scanner.scan_until(@parser.regexp) 
+         exp = scanner.matched
+         y << [:string, string[0..-(exp.size + 1)]] unless string == exp
+         y << [:exp, exp[1..-2]]
         end
+        y << [:string, scanner.rest] unless scanner.eos?
+      end
+    end
+
+    def eval_string(string)
+      # run callbacks on string
+      @func_stack.reduce(string) {|memo, func| func.(memo) }
+    end
+
+    def eval_exp(exp)
+      # dont parse if we are in the no parse zone
+      return eval_string(@parser.brackets(exp)) if @state.last == 0 and not exp.include? @parser.no_parse
+      # process expressions
+      unless exp[0] == @parser.end_exp
+        register(exp)  #returns start tags
+      else
+        terminate(exp) #returns end tags
       end
     end
 
