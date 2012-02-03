@@ -5,11 +5,11 @@ Look at test.rb and below for example usage.
 
 You can define your own elements and chain them together, but they can only be 1 character:
 
-    "[biu]bold italic underline[|]" => "<strong><em><u>bold italic underline</u></em></strong>
+    "[biu]bold italic underline[.]" => "<strong><em><u>bold italic underline</u></em></strong>
 
 you can also close multiple tags at once:
 
-    "[b][i][u]bold italic underline[|||]" => "<strong><em><u>bold italic underline</u></em></strong>"
+    "[b][i][u]bold italic underline[...]" => "<strong><em><u>bold italic underline</u></em></strong>"
 
 unclosed tags are automatically closed at the end of the text:
 
@@ -25,4 +25,4 @@ The compiler follows rules such as not allowing block elements to be inside of i
 
 you can also define custom functions to operate on the tags:
 
-    "[r]reversed[|]" => "desrever"
+    "[r]reversed[.]" => "desrever"
