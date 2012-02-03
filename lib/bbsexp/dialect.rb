@@ -39,6 +39,7 @@ module BBSexp
       end
 
       def exp(sym, state, args={})
+        sym = sym.to_s
         @no_parse = sym if state == :noparse
         @exps[sym] = Expression.new(sym, state, args)
       end
