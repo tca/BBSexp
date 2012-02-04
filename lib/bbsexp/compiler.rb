@@ -8,11 +8,10 @@ module BBSexp
       @func_stack = []
       @state = [3]
       @locks = Hash[ @parser.exps.keys.map{|k| [k, false] } ]
-      @tokens = tokens
     end
 
     def build
-      @result <<  @tokens.map do |type, value|
+      @result <<  tokens.map do |type, value|
                     case type
                     when :string  then eval_string value
                     when :exp     then eval_exp value
@@ -26,15 +25,15 @@ module BBSexp
     end
 
     def tokens
-      Enumerator.new do |y|
-        scanner = StringScanner.new(@text)
-        while string = scanner.scan_until(@parser.regexp) 
-         exp = scanner.matched
-         y << [:string, string[0..-(exp.size + 1)]] unless string == exp
-         y << [:exp, exp[1..-2]]
-        end
-        y << [:string, scanner.rest] unless scanner.eos?
+      return to_enum(:tokens) unless block_given?
+      scanner = StringScanner.new(@text)
+
+      while string = scanner.scan_until(@parser.regexp) 
+       exp = scanner.matched
+       yield [:string, string[0..-(exp.size + 1)]] unless string == exp
+       yield [:exp, exp[1..-2]]
       end
+      yield [:string, scanner.rest] unless scanner.eos?
     end
 
     def eval_string(string)
