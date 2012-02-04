@@ -12,7 +12,7 @@ module BBSexp
     end
 
     def build
-      @result <<  @tokens.to_a.map do |type, value|
+      @result <<  @tokens.map do |type, value|
                     case type
                     when :string  then eval_string value
                     when :exp     then eval_exp value
